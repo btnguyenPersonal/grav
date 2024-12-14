@@ -1,14 +1,16 @@
-let color_white = '#FFFFFF';
-let color_black = '#000000';
-let color_green = '#00FF00';
-let color_yellow = '#FFFF00';
-let color_orange = '#FFA500';
-let color_blue = '#0000FF';
-let color_red = '#FF0000';
+let colors = {
+    white: '#FFFFFF',
+    black: '#000000',
+    green: '#00FF00',
+    yellow: '#FFFF00',
+    orange: '#FFA500',
+    blue: '#0000FF',
+    red: '#FF0000',
+}
 let pause = false;
 let gravity = 1;
 let viewport = {
-    backgroundColor: color_white,
+    backgroundColor: colors.white,
     height: 900,
     width: 900,
     x: 0,
@@ -16,7 +18,7 @@ let viewport = {
 };
 let planets = [
     {
-        color: color_yellow,
+        color: colors.yellow,
         mass: 900,
         size: 100,
         pos_x: 0,
@@ -25,7 +27,7 @@ let planets = [
         vel_y: 0,
     },
     {
-        color: color_blue,
+        color: colors.blue,
         mass: 10,
         size: 10,
         pos_x: 222,
@@ -34,7 +36,7 @@ let planets = [
         vel_y: 10,
     },
     {
-        color: color_orange,
+        color: colors.orange,
         mass: 15,
         size: 10,
         pos_x: 0,
@@ -43,7 +45,7 @@ let planets = [
         vel_y: 10,
     },
     {
-        color: color_green,
+        color: colors.green,
         mass: 15,
         size: 10,
         pos_x: 100,
@@ -82,7 +84,7 @@ function getCircle(viewport, size, x, y, color) {
 function draw(viewport, planet) {
     let color = planet.color;
     if (planets.some(p => isTouching(p, planet))) {
-        color = color_red;
+        color = colors.red;
     }
     return getCircle(viewport, planet.size, planet.pos_x, planet.pos_y, color);
 }
@@ -91,7 +93,7 @@ function getAxis(viewport) {
     return `
         <div>
             <div style="
-                background-color: ${color_black};
+                background-color: ${colors.black};
                 height: 1px;
                 width: ${viewport.height}px;
                 position: absolute;
@@ -99,7 +101,7 @@ function getAxis(viewport) {
                 left: 0px;
             "></div>
             <div style="
-                background-color: ${color_black};
+                background-color: ${colors.black};
                 height: ${viewport.height}px;
                 width: 1px;
                 position: absolute;
@@ -123,14 +125,14 @@ function render() {
         </div>
     `;
 }
-render();
 
 function movePlanets(planets) {
-    planets.forEach((planet) => {
+    const output = [...planets];
+    output.forEach((planet) => {
         planet.pos_x += planet.vel_x;
         planet.pos_y += planet.vel_y;
     });
-    return planets;
+    return output;
 }
 
 function isTouching(planet1, planet2) {
@@ -178,8 +180,7 @@ function applyCollisions(planets) {
             })
         }
     });
-    planets = output;
-    return planets.filter(p => !deadPlanetIds.includes(p.id));
+    return output.filter(p => !deadPlanetIds.includes(p.id));
 }
 
 setInterval(() => {
@@ -187,7 +188,21 @@ setInterval(() => {
         planets = movePlanets(planets);
         planets = applyGravity(planets);
         planets = applyCollisions(planets);
-        console.log(planets);
         render();
     }
 }, 10)
+
+function handleClick(event) {
+    const action = event.target.getAttribute('data-action');
+    if (!action) return;
+
+    switch(action) {
+        case 'pause':
+            pause = !pause;
+            break;
+    }
+}
+
+document.getElementById('app').addEventListener('click', handleClick);
+render();
+
