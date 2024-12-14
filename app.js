@@ -122,16 +122,13 @@ function getAxis(viewport) {
 function render() {
     const app = document.getElementById('app');
     app.innerHTML = `
-        <div>
-            <div style="position:absolute;top:${viewport.y};left:${viewport.x};background-color:${viewport.backgroundColor};height:${viewport.height}px;width:${viewport.width}px">
-                ${showAxis === true && getAxis(viewport)}
-                ${planets.map((planet) => draw(viewport, planet)).join('')}
-                <div style="height:${viewport.height}px;width:${viewport.height}px;"></div>
-                <button id="pause" data-action="pause">${pause ? 'Resume' : 'Pause'}</button>
-            </div>
+        <div style="position:absolute;top:${viewport.y};left:${viewport.x};background-color:${viewport.backgroundColor};height:${viewport.height}px;width:${viewport.width}px">
+            ${showAxis === true && getAxis(viewport)}
+            ${planets.map((planet) => draw(viewport, planet)).join('')}
+            <div style="height:${viewport.height}px;width:${viewport.height}px;"></div>
+            <button id="pause" data-action="pause">TODO pause</button>
         </div>
     `;
-    document.getElementById('pause').addEventListener('hover', () => { pause = !pause; render() });
 }
 
 function movePlanets(planets) {
@@ -201,4 +198,5 @@ setInterval(() => {
 }, 10)
 
 render();
+document.getElementById('pause').addEventListener('hover', () => { pause = !pause; render() });
 
