@@ -11,6 +11,7 @@ let pause = false;
 let gravity = 1;
 let viewport = {
     backgroundColor: colors.white,
+    zoom: 0.6,
     height: 900,
     width: 900,
     x: 0,
@@ -19,7 +20,7 @@ let viewport = {
 let planets = [
     {
         color: colors.yellow,
-        mass: 900,
+        mass: 1000,
         size: 100,
         pos_x: 0,
         pos_y: 0,
@@ -31,25 +32,25 @@ let planets = [
         mass: 10,
         size: 10,
         pos_x: 222,
-        pos_y: 15,
+        pos_y: 222,
         vel_x: -10,
-        vel_y: 10,
+        vel_y: 7,
     },
     {
         color: colors.orange,
-        mass: 15,
-        size: 10,
+        mass: 25,
+        size: 15,
         pos_x: 0,
         pos_y: -150,
-        vel_x: -10,
-        vel_y: 10,
+        vel_x: 10,
+        vel_y: 0,
     },
     {
         color: colors.green,
         mass: 15,
-        size: 10,
+        size: 5,
         pos_x: 100,
-        pos_y: 15,
+        pos_y: 150,
         vel_x: -10,
         vel_y: 10,
     },
@@ -58,7 +59,13 @@ let i = 0;
 planets = planets.map((planet) => {
     i++;
     return {
-        ...planet,
+        color: planet.color,
+        mass: viewport.zoom * planet.mass,
+        size: viewport.zoom * planet.size,
+        pos_x: viewport.zoom * planet.pos_x,
+        pos_y: viewport.zoom * planet.pos_y,
+        vel_x: viewport.zoom * planet.vel_x,
+        vel_y: viewport.zoom * planet.vel_y,
         id: i
     };
 });
@@ -120,10 +127,11 @@ function render() {
                 ${showAxis === true && getAxis(viewport)}
                 ${planets.map((planet) => draw(viewport, planet)).join('')}
                 <div style="height:${viewport.height}px;width:${viewport.height}px;"></div>
-                <button data-action="pause">pause</button>
+                <button id="pause" data-action="pause">${pause ? 'Resume' : 'Pause'}</button>
             </div>
         </div>
     `;
+    document.getElementById('pause').addEventListener('hover', () => { pause = !pause; render() });
 }
 
 function movePlanets(planets) {
@@ -192,17 +200,5 @@ setInterval(() => {
     }
 }, 10)
 
-function handleClick(event) {
-    const action = event.target.getAttribute('data-action');
-    if (!action) return;
-
-    switch(action) {
-        case 'pause':
-            pause = !pause;
-            break;
-    }
-}
-
-document.getElementById('app').addEventListener('click', handleClick);
 render();
 
