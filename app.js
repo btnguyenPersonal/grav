@@ -9,66 +9,69 @@ let colors = {
 }
 let pause = false;
 let gravity = 1;
+let centerOnPlanetId;
 let viewport = {
     backgroundColor: colors.white,
-    zoom: 0.6,
+    zoom: 1,
     height: 900,
     width: 900,
     x: 0,
-    y: 0
+    y: 0,
+    center: {
+        x: 0,
+        y: 0,
+    },
 };
-let planets = [
-    {
-        color: colors.yellow,
-        mass: 1000,
-        size: 100,
-        pos_x: 0,
-        pos_y: 0,
-        vel_x: 0,
-        vel_y: 0,
-    },
-    {
-        color: colors.blue,
-        mass: 10,
-        size: 10,
-        pos_x: 222,
-        pos_y: 222,
-        vel_x: -10,
-        vel_y: 7,
-    },
-    {
-        color: colors.orange,
-        mass: 25,
-        size: 15,
-        pos_x: 0,
-        pos_y: -150,
-        vel_x: 10,
-        vel_y: 0,
-    },
-    {
-        color: colors.green,
-        mass: 15,
-        size: 5,
-        pos_x: 100,
-        pos_y: 150,
-        vel_x: -10,
-        vel_y: 10,
-    },
-]
-let i = 0;
-planets = planets.map((planet) => {
-    i++;
-    return {
-        color: planet.color,
-        mass: viewport.zoom * planet.mass,
-        size: viewport.zoom * planet.size,
-        pos_x: viewport.zoom * planet.pos_x,
-        pos_y: viewport.zoom * planet.pos_y,
-        vel_x: viewport.zoom * planet.vel_x,
-        vel_y: viewport.zoom * planet.vel_y,
-        id: i
-    };
-});
+let rawPlanets = [
+        {
+            color: colors.yellow,
+            mass: 600,
+            size: 60,
+            pos_x: 0,
+            pos_y: 0,
+            vel_x: 0,
+            vel_y: 0
+        },
+        {
+            color: colors.blue,
+            mass: 6,
+            size: 6,
+            pos_x: 133.2,
+            pos_y: 133.2,
+            vel_x: -6,
+            vel_y: 4.2
+        },
+        {
+            color: colors.orange,
+            mass: 15,
+            size: 9,
+            pos_x: 0,
+            pos_y: -90,
+            vel_x: 6,
+            vel_y: 0
+        },
+        {
+            color: colors.green,
+            mass: 9,
+            size: 3,
+            pos_x: 60,
+            pos_y: 90,
+            vel_x: -6,
+            vel_y: 6
+        }
+];
+
+function generateIds(rawPlanets) {
+    let i = 0;
+    return rawPlanets.map((planet) => {
+        i++;
+        return {
+            ...planet,
+            id: i
+        };
+    });
+}
+let planets = generateIds(rawPlanets);
 let showAxis = true;
 let showUser = true;
 
@@ -79,11 +82,11 @@ function getCircle(viewport, size, x, y, color) {
             border: solid 1px;
             border-radius: 100%;
             position: absolute;
-            top: ${viewport.height / 2 + y}px;
-            left: ${viewport.width / 2 + x}px;
-            height: ${size}px;
-            width: ${size}px;
-            transform: translateX(-${size / 2}px) translateY(-${size / 2}px);
+            top: ${viewport.height / 2 + (viewport.zoom * (y - viewport.center.y))}px;
+            left: ${viewport.width / 2 + (viewport.zoom * (x - viewport.center.x))}px;
+            height: ${viewport.zoom * size}px;
+            width: ${viewport.zoom * size}px;
+            transform: translateX(-${(viewport.zoom * size) / 2}px) translateY(-${(viewport.zoom * size) / 2}px);
         "></div>
     `;
 }
@@ -123,10 +126,44 @@ function render() {
     const app = document.getElementById('app');
     app.innerHTML = `
         <div style="position:absolute;top:${viewport.y};left:${viewport.x};background-color:${viewport.backgroundColor};height:${viewport.height}px;width:${viewport.width}px">
+            <div id="simulator"></div>
+            <div style="position:absolute;top:${viewport.height + 10}px;">
+                <button id="pause" data-action="pause">pause</button>
+                <br></br>
+                zoom:&nbsp;
+                <input id="zoom" placeholder="${viewport.zoom}" style="width:50px"></input>
+                <br></br>
+                centerOnPlanet:&nbsp;
+                <input id="centerOnPlanetId" style="width:50px"></input>
+                <br></br>
+                <button id="apply">apply</button>
+            </div>
+        </div>
+    `;
+    document.getElementById('pause').addEventListener('click', () => { pause = !pause; render() });
+    document.getElementById('apply').addEventListener('click', () => {
+        if (document.getElementById('centerOnPlanetId').value) {
+            centerOnPlanetId = parseInt(document.getElementById('centerOnPlanetId').value);
+        } else {
+            viewport.center = {
+                x: 0,
+                y: 0
+            };
+        }
+        if (document.getElementById('zoom').value) {
+            viewport.zoom = document.getElementById('zoom').value;
+        }
+        planets = generateIds(rawPlanets);
+    });
+}
+
+function renderSimulator() {
+    const simulator = document.getElementById('simulator');
+    simulator.innerHTML = `
+        <div>
             ${showAxis === true && getAxis(viewport)}
             ${planets.map((planet) => draw(viewport, planet)).join('')}
             <div style="height:${viewport.height}px;width:${viewport.height}px;"></div>
-            <button id="pause" data-action="pause">TODO pause</button>
         </div>
     `;
 }
@@ -188,15 +225,27 @@ function applyCollisions(planets) {
     return output.filter(p => !deadPlanetIds.includes(p.id));
 }
 
+function centerPlanet(viewport, planets, centerOnPlanetId) {
+    if (centerOnPlanetId) {
+        let temp = JSON.parse(JSON.stringify(viewport));
+        const p = planets.find(planet => centerOnPlanetId === planet.id);
+        temp.center.x = p.pos_x;
+        temp.center.y = p.pos_y;
+        return temp;
+    } else {
+        return viewport;
+    }
+}
+
 setInterval(() => {
     if (!pause) {
         planets = movePlanets(planets);
         planets = applyGravity(planets);
         planets = applyCollisions(planets);
-        render();
+        viewport = centerPlanet(viewport, planets, centerOnPlanetId);
     }
+    renderSimulator();
 }, 10)
 
 render();
-document.getElementById('pause').addEventListener('hover', () => { pause = !pause; render() });
 
